@@ -2,6 +2,8 @@ const chatBody = document.querySelector(".chat-body");
 const messageInput = document.querySelector(".message-input");
 const sendMessageButton = document.querySelector("#send-message");
 const fileInput = document.querySelector("#file-input");
+const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
+const fileCancelButton = document.querySelector("#file-cancel");
 
 const API_KEY = "AIzaSyBKiyCfmErkeZJnSqNP8LWDZOzJEljsBh8";
 
@@ -47,10 +49,14 @@ const generateBotResponse = async(incomingMessageDiv) => {
         const apiResponse = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g,"$1").trim();
         messageElement.innerText = apiResponse;
     } catch (err) {
+        // Handle error in API response
         console.log(err);
         messageElement.innerText = err.message;
         messageElement.style.color = "#ff0000";
     } finally{
+        // Reset user's file data, removing thinking indicatior and scroll chat to bottom
+         
+        userData.file = {};
         incomingMessageDiv.classList.remove("thinking");
         chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
     }
@@ -61,9 +67,11 @@ const handleOutgoingMessage = (e) => {
     e.preventDefault();
     userData.message = messageInput.value.trim();
     messageInput.value = "";
-    
+    fileUploadWrapper.classList.remove("file-uploaded")
+
     // create and display user message
-    const messageContent = `<div class="message-text"></div>`;
+    const messageContent = `<div class="message-text"></div>
+                            ${userData.file.data ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment" />` : ""}`;
 
     const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
     outgoingMessageDiv.querySelector(".message-text").innerText = userData.message;
@@ -98,28 +106,33 @@ messageInput.addEventListener("keydown",(e) => {
     }
 });
 
-// Handle file input change
+// Handle file input change and preview the selected file
 fileInput.addEventListener("change" , () => {
     const file = fileInput.files[0];
     if (!file) return;
     // console.log(file);
     const reader = new FileReader();
     reader.onload = (e) => {
+        fileUploadWrapper.querySelector("img").src = e.target.result;
+        fileUploadWrapper.classList.add("file-uploaded")
         const base64string = e.target.result.split(",")[1];
         
         // store file data in userData
         userData.file = {
             data:base64string,
-            mime_type:file.type
+            mime_type:file.type 
         }
         // console.log(userData);
         fileInput.value = "";
         } 
 
         reader.readAsDataURL(file);
-    }
-)
-
+    });
+// Cancel file uploaded
+fileCancelButton.addEventListener("click", () => {
+    userData.file = {};
+    fileUploadWrapper.classList.remove("file-uploaded")
+});
+ 
 sendMessageButton.addEventListener("click", (e) => handleOutgoingMessage(e));
 document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());
-
