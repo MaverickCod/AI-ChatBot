@@ -33,19 +33,23 @@ const createMessageElement = (content, ...classes) => {
 // generate bot response using Gemeni API
 const generateBotResponse = async(incomingMessageDiv) => {
     const messageElement = incomingMessageDiv.querySelector(".message-text");
-    chatHistory.push()
+    
+    // Add user message to chat history
+    chatHistory.push({
+        role: "user",
+        parts:[{ text: userData.message }, ...(userData.file.data ? [{ inline_data: userData.file }] : [])]
+    });
 
     // api request options
     const requestOptions = {
         method: "POST",
         headers: { "Content-Type": "application/json"},
         body : JSON.stringify({
-            contents:[{
-                parts:[{ text: userData.message }, ...(userData.file.data ? [{ inline_data: userData.file }] : [])]
-            }]
+            contents: chatHistory
         })
     }
     try {
+        // Fetch bot response from API
         const response = await fetch(API_URL, requestOptions);
         const data = await response.json();
         if(!response.ok) throw new Error(data.error.message);
@@ -54,6 +58,12 @@ const generateBotResponse = async(incomingMessageDiv) => {
         // Extract and display bot's response text
         const apiResponse = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g,"$1").trim();
         messageElement.innerText = apiResponse;
+
+        // Add bot response to chat history
+        chatHistory.push({
+            role: "model",
+            parts:[{ text: apiResponse }]
+        });
     } catch (err) {
         // Handle error in API response
         console.log(err);
