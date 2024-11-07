@@ -5,7 +5,7 @@ This project is an AI-powered chatbot interface that interacts with users in rea
 
 ## Checkout the website
     
-  [AI ChatBot](ai-chat-bot-chi.vercel.app)
+  [AI ChatBot](https://ai-chat-bot-chi.vercel.app/)
 
 ## Features
 
